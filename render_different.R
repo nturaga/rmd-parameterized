@@ -2,6 +2,7 @@ library(rmarkdown)
 library(lubridate)
 
 ## Pass in other params for render() as required 
+
 renderMyDocument <- function(template_doc = "demo.Rmd",
                              genes, cancers,
                              output_dir = ".",
@@ -10,8 +11,8 @@ renderMyDocument <- function(template_doc = "demo.Rmd",
     
     res <- rmarkdown::render(template_doc,
                              params = list(
-                                 gene1 = genes[1],
-                                 gene2 = genes[2],
+                                 geneA = genes[1],
+                                 geneB = genes[2],
                                  cancer_types_vector = cancers),
                              output_dir = output_dir,
                              output_file = output_file,                  
@@ -20,7 +21,6 @@ renderMyDocument <- function(template_doc = "demo.Rmd",
 }
 
 ## Call function
-
 renderMyDocument(template_doc = "demo.Rmd",
                  genes = c('BRCA1', 'BRCA2'),
                  cancers = c('Breast', 'Prostate', 'Bone'),

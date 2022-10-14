@@ -2,75 +2,146 @@
 title: "Demo - Parameterized R markdown"
 author: "Nitesh Turaga"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+    html_document:
+        toc: true
+        number_sections: true
 params:
-    ## Useful immediately 
-    start: !r as.Date("2015-01-01")
-    gene1: "BRCA"
-    gene2: "TP53"
-    cancer_types: [Bladder Breast Prostate]
+    geneA: "BRCA"
+    geneB: "TP53"
+    cancer_types: [Bladder Breast Liver]
     cancer_types_vector: !r as.character(c("Bladder", "Prostate", "Lung", "Breast"))
     my_vec: [1,2,3,4]
     int_value: !r as.integer(1000)
     logical_value: TRUE
+    start: !r as.Date("2015-01-01")
 ---
 
-```{r setup, include=FALSE}
+This chuck below means `echo = TRUE` for every chunk
+
+```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Parameter types
+# Parameters for this markdown file
 
-All of the standard R types that can be parsed by the yaml::yaml.load function 
-are supported including `character`, `integer`, `numeric`, and `logical`. In addition, 
-you can use arbitrary other R object types by specifying the value using an 
-R expression. 
-
-Refer to [Parameters](https://rmarkdown.rstudio.com/lesson-6.html)
-
-## Parasing through params
-
-You can refer to things in your chunks with `params$gene1`, call the parameter 
-whatever you want, not just `gene1`, but the variable name that makes most
-sense for the parameter.
-
-Within the text if you want to call on the first gene: "`r params$gene1`" and 
-the second gene: "`r params$gene2`", you can refer to them within your text with 
-the back ticks and `r` call. 
-
-Refer to [inline code](https://rmarkdown.rstudio.com/lesson-4.html)
-
-```{r}
-(first_gene <- params$gene1)
-
-(second_gene <- params$gene2)
+```{bash, eval=FALSE}
+---
+params:
+    ## character vector (length 1)
+    geneA: "BRCA" 
+    ## character vector (length 1)
+    geneB: "TP53" 
+    ## character vector (length 3)
+    cancer_types: [Bladder Breast Liver] 
+    ## character vector as an R object with !r
+    cancer_types_vector: !r as.character(c("Bladder", "Prostate", "Lung", "Breast")) 
+    ## numeric vector (length 4)
+    my_vec: [1,2,3,4] 
+    ## integer 
+    int_value: !r as.integer(1000)
+    ## logical value
+    logical_value: TRUE
+    ## Date object 
+    start: !r as.Date("2015-01-01")
+---
 ```
 
-### Parsing through a vector in your params
+
+# Parameter types
+
+Standard R types that can be parsed by the `yaml::yaml.load()`
+function are supported
+
+- `character`
+
+- `integer`
+
+- `numeric`
+
+- `logical`
+
+In addition, you can use arbitrary other R object types by specifying
+the value using an R expression using `!r`.
+
+Refer to this document - [Parameters][].
+
+# Using Parameters in your text and code
+
+## Character
+
+You can refer to parameters in your chunks with `params$geneA`, call the
+parameter with variable name that makes most sense for the parameter(not just `geneA`).
+
+Within the text if you want to call on the first gene: `r params$geneA` and the second gene: `r params$geneB`, you can refer to them within your text with the back ticks and `r` call. This way you can make your paragraphs more modular and changeable.
+
+```{bash eval=FALSE}
+`r params$geneB`
+```
+
+Refer to [inline code][]
+
+Reference your character parameters easily and reuse the variables
 
 ```{r}
-(my_cancer_types_character <- params$cancer_types)
+(first_gene <- params$geneA)
 
-class(my_cancer_types_character)
+(second_gene <- params$geneB)
+```
 
-(my_cancer_types_vector <- params$cancer_types_vector)
-class(my_cancer_types_vector)
+## Vectors - character vector, integer vector etc
+
+Use your vectors within code as well as needed: You can declare vectors 
+in different ways
+
+```
+[Cancer1 Cancer2 Cancer3]
+```
+
+or 
+
+```{bash eval=FALSE}
+!r as.character(c('Cancer1', 'Cancer2', 'Cancer3'))
+```
+
+Example:
+
+```{r}
+## First type of cancer vector (length 1)
+## cancer_types: [Bladder Breast Prostate] 
+(cancer_types_vector1 <- params$cancer_types)
+class(cancer_types_vector1)
+unlist(strsplit(cancer_types_vector1, split = " "))
+
+## second type of cancer vector 
+## cancer_types_vector: !r as.character(c("Bladder", "Prostate", "Lung", "Breast"))
+(cancer_types_vector2 <- params$cancer_types_vector)
+class(cancer_types_vector2)
 (params$cancer_types_vector[2])
 
+## Integer vector (length 1)
 (my_int_value <- params$int_value)
 
-(my_vector <- params$my_vec)
+## Integer vector
+(my_int_vector <- params$my_vec)
+class(my_int_vector)
+```
 
+
+## Logical values
+
+```{r}
+## params:
+##         logical_value: TRUE
 (my_logical_value <- params$logical_value)
 ```
 
-## Do fancy things with your params
+# Logical expressions using a logical value
 
-
-Loop over your parmeters to create great plots, IF your logical value is true
+Loop over your parameters to create great plots, IF your logical value is true
 
 ```{r}
-
+## If param is TRUE
 if (params$logical_value) {
     message("You will see something amazing!")
     for (cancer in params$cancer_types_vector) {
@@ -79,7 +150,81 @@ if (params$logical_value) {
 }
 ```
 
-## Get a free shiny app for setting your params
+Return some common cancers in both vectors, but don't print it out
+
+```{r echo=TRUE}
+## Return common cancers between two vectors
+index <- params$cancer_types_vector %in% 
+    unlist(strsplit(params$cancer_types, split = " ")) 
+    
+
+common_cancers <- params$cancer_types_vector[index]
+```
+
+These are the common cancer types - **`r common_cancers`** in both the vectors that were passed into the document as a parameters.
+
+# Render outside of your rmarkdown
+
+From outside of your Rmarkdown document you are able to render with
+different parameters than the ones set inside your document, i.e,
+re-use old Rmarkdowns and generate for different clients.
+
+```{r eval=FALSE}
+renderMyDocument <- function(template = "demo.Rmd", genes, cancers) {
+  rmarkdown::render(template, params = list(
+    geneA = genes[1],
+    geneB = genes[2],
+    cancers = cancers
+  ))
+}
+```
+
+# logical checking to run chunks
+
+```{r do_it}
+.is_valid <- function() {
+    ## Make this as complex as your heart desires
+    TRUE
+}
+## execute code
+do_it = .is_valid()
+```
+
+Next you can pass this in chunk options i.e `eval=do_it`
+
+```{r eval=do_it}
+print("See it works!")
+```
+
+
+# Render more paramters
+
+There are [advanced docs][] that allow you to parameterize even more.
+
+```
+---
+title: "My Document"
+output: html_document
+params:
+  minimum: 
+    label: "Minimum:"
+    value: 100
+    input: slider
+    min: 0
+    max: 1000
+  region:
+    label: "Region:"
+    value: east
+    input: select
+    choices: [east, west, north, south]
+  data: 
+    label: "Input dataset:"
+    value: results.csv
+    input: file
+---
+```
+
+# Get a free shiny app for setting your params
 
 This is a VERY VERY COOL FEATURE!!
 
@@ -87,24 +232,17 @@ This is a VERY VERY COOL FEATURE!!
 rmarkdown::render("demo.Rmd", params = "ask")
 ```
 
-![](free_shiny_app.png)
+# SessionInfo
 
-
-## Render outside of your rmarkdown
-
-From outside of your Rmarkdown document you are able to render with different 
-parameters than the ones set inside your document, i.e, re-use old Rmarkdowns
-and generate for different clients.
-
-```{r eval=FALSE}
-renderMyDocument <- function(region, start) {
-  rmarkdown::render("MyDocument.Rmd", params = list(
-    region = region,
-    start = start
-  ))
-}
+```{r}
+sessioninfo::session_info()
 ```
 
-## Render even more paramters
 
-[Advanced docs](https://garrettgman.github.io/rmarkdown/developer_parameterized_reports.html)
+^[Inline code https://rmarkdown.rstudio.com/lesson-4.html]
+^[advanced docs https://garrettgman.github.io/rmarkdown/developer_parameterized_reports.html]
+^[Best book on Rmarkdown https://bookdown.org/yihui/rmarkdown/parameterized-reports.html]
+
+[Parameters]: (https://rmarkdown.rstudio.com/lesson-6.html)
+[inline code]: (https://rmarkdown.rstudio.com/lesson-4.html)
+[advanced docs]: https://garrettgman.github.io/rmarkdown/developer_parameterized_reports.html       
